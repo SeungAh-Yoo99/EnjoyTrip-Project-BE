@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- 지도를 표시할 div 입니다 -->
+    <h1>지도</h1>
+    <select id="location">
+      <option value="">---지역을 선택해주세요---</option>
+      <option value="서울">서울</option>
+      <option value="부산">부산</option>
+      <option value="인천">인천</option>
+      <option value="대구">대구</option>
+      <option value="안양">안양</option>
+      <option value="대전">대전</option>
+    </select>
+    <select id="type">
+      <option value="">---종류를 선택해주세요---</option>
+      <option value="AT4">관광명소</option>
+      <option value="MT1">대형마트</option>
+      <option value="CS2">편의점</option>
+      <option value="SW8">지하철역</option>
+      <option value="CT1">문화시설</option>
+    </select>
+    <input
+      type="button"
+      value="검색하기"
+      onclick="setPosition(document.getElementById('location').value,
+      document.getElementById('type').value)"
+    />
+    <div id="map" style="width: 800px; height: 600px"></div>
+
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=bf6e75981d6225aa22adc5b8c08f1818&libraries=services"
+    ></script>
+    <script>
+      var positions = {
+        서울: { lat: 37.56667, lng: 126.97806 },
+        부산: { lat: 35.1046, lng: 129.0432 },
+        인천: { lat: 37.4723, lng: 126.4219 },
+        대구: { lat: 35.522, lng: 128.3609 },
+        안양: { lat: 37.234, lng: 126.572 },
+        대전: { lat: 36.2104, lng: 127.2306 },
+      };
+      var cur_lat;
+      var cur_lng;
+      var cur_type;
+      function setPosition(location, type) {
+        cur_lat = positions[location].lat;
+        cur_lng = positions[location].lng;
+        cur_type = type;
+        createMap();
+      }
+
+      function createMap() {
+        var mapContainer = document.getElementById("map"), // 지도를 표시할 div
+          mapOption = {
+            center: new kakao.maps.LatLng(cur_lat, cur_lng), // 지도의 중심좌표
+            level: 8, // 지도의 확대 레벨
+          };
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+        var infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+
+        var ps = new kakao.maps.services.Places(map);
+
+        ps.categorySearch(cur_type, placesSearchCB, { useMapBounds: true });
+
+        function placesSearchCB(data, status, pagination) {
+          if (status === kakao.maps.services.Status.OK) {
+            for (var i = 0; i < data.length; i++) {
+              displayMarker(data[i]);
+            }
+          }
+        }
+
+        function displayMarker(place) {
+          console.log(place);
+          // 마커를 생성하고 지도에 표시합니다
+          var marker = new kakao.maps.Marker({
+            map: map,
+            position: new kakao.maps.LatLng(place.y, place.x),
+            cliackable: true, //마커 클릭시 지도 클릭 안되게
+            address: place.address_name,
+            category: place.category_name,
+            name: place.place_name,
+            url: place.place_url,
+          });
+
+          // 마커에 클릭이벤트를 등록합니다
+          kakao.maps.event.addListener(marker, "click", function () {
+            // 마커를 클릭하면 장소명이 인포윈도우에 표출됩니다
+            var iwContent = `<div style="padding:5px;">
+                    ${place.place_name}<br>
+                    ${place.address_name}<br>
+                    <a href="${place.place_url}" target="_blank">${place.place_url}</a><br>
+                    <input type="button" value="내 여행지에 등록" onclick='addMyTrip()'></input>
+                </div>`;
+            var iwRemoveable = true;
+            var infowindow = new kakao.maps.InfoWindow({
+              content: iwContent,
+              removable: iwRemoveable,
+            });
+
+            infowindow.open(map, marker);
+          });
+        }
+      }
+
+      function addMyTrip() {
+        alert("내 여행지 목록에 추가되었습니다.");
+      }
+
+      // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+    </script>
+  </body>
+</html>
